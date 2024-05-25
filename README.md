@@ -11,7 +11,7 @@ Aby skrypt działał poprawnie, wymagane jest posiadanie zainstalowanych następ
 ## Uruchomienie
 Skrypt uruchamia się z linii poleceń. Przykładowe użycie:
 ```
-python bible_text_retrieval.py Rdz 1-1 pl
+python biblia.py john 1-1 greek
 ```
 Gdzie:
 - `Rdz` - nazwa księgi (np. "Rdz" dla Księgi Rodzaju) nazwę trzeba zapisać w języku angielskim dla opcji greek i hebrew,
