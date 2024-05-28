@@ -21,6 +21,3 @@ Gdzie:
 ## Zapisywanie danych
 Dane pobrane z internetu są zapisywane do plików tekstowych w celu ich ponownego użycia bez konieczności ponownego pobierania z internetu. Nazwa pliku generowana jest na podstawie podanych danych (nazwa księgi, numer rozdziału i wersetu oraz język tekstu).
 
----
-
-W README zalecam uzupełnienie sekcji "Autor" i "Licencja" zgodnie z Twoimi preferencjami. Dodatkowo, należy upewnić się, że istnieje plik `LICENSE` zawierający odpowiednią licencję, np. MIT.
