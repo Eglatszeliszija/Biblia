@@ -11,7 +11,15 @@ def retrieve_text(book, chapter_verse, language):
     # Sprawdzamy, czy plik już istnieje
     if os.path.exists(filename):
         with open(filename, 'r', encoding='utf-8') as file:
-            return file.read()
+            file_content = file.read()
+            # Sprawdzenie czy istnieje sekcja z klasami skrótów
+            if "\n\nKlasy abbr:\n" in file_content:
+                text, abbr_section = file_content.split("\n\nKlasy abbr:\n")
+                abbr_classes = abbr_section.strip().split('\n')
+            else:
+                text = file_content
+                abbr_classes = None
+            return text, abbr_classes
     else:
         # Tworzymy adres URL strony na podstawie podanych danych
         if language == 'pl':
@@ -27,30 +35,36 @@ def retrieve_text(book, chapter_verse, language):
             # Parsujemy zawartość strony przy użyciu Beautiful Soup
             soup = BeautifulSoup(response.content, 'html.parser')
 
-            # Jeśli użytkownik wybrał język "pl", użyj funkcji retrieve_tdwtext
+            # Jeśli użytkownik wybrał język "pl", użyj funkcji retrieve_pl_text
             if language == 'pl':
-                text = retrieve_pl_text(soup)
+                text, abbr_classes = retrieve_pl_text(soup)
             else:
                 if language == 'greek':
                     first_element = soup.find(class_='greek')
                 elif language == 'hebrew':
                     first_element = soup.find(class_='heb')
                 else:
-                    return "Nieprawidłowy język. Dostępne opcje to 'greek', 'hebrew' lub 'pl'."
+                    return "Nieprawidłowy język. Dostępne opcje to 'greek', 'hebrew' lub 'pl'.", []
 
                 # Jeśli znaleziono element w odpowiednim języku, zwracamy jego tekst
                 if first_element:
                     text = first_element.text.replace('\n', '').strip()
+                    abbr_classes = []
                 else:
                     text = f"Nie znaleziono elementu w języku '{language}' na stronie: {url}"
+                    abbr_classes = []
 
-            # Zapisujemy pobrany tekst do pliku
+            # Zapisujemy pobrany tekst i klasy abbr do pliku
             with open(filename, 'w', encoding='utf-8') as file:
-                file.write(text)
+                if abbr_classes:
+                    for abbr, fragment in zip(abbr_classes, text.split('\n')):
+                        file.write(f"{abbr} : {fragment}\n")
+                else:
+                    file.write(text)
 
-            return text
+            return text, abbr_classes
         else:
-            return f"Nie udało się pobrać zawartości strony: {url}"
+            return f"Nie udało się pobrać zawartości strony: {url}", []
 
 # Funkcja do parsowania tekstu w języku polskim
 def retrieve_pl_text(soup):
@@ -60,11 +74,19 @@ def retrieve_pl_text(soup):
     # Łańcuch przechowujący tekst z elementów "tdwtext"
     tdwtext_text = ""
 
+    # Lista przechowująca klasy abbr
+    abbr_classes = []
+
     # Iterujemy przez wszystkie znalezione elementy i dodajemy ich tekst do łańcucha
     for element in tdwtext_elements:
         tdwtext_text += element.text.strip() + "\n"
 
-    return tdwtext_text.strip()
+        # Znajdujemy element o klasie "tdabbr" odpowiadający danemu elementowi "tdwtext"
+        abbr_element = element.find_previous_sibling(class_='tdabbr')
+        if abbr_element:
+            abbr_classes.append(abbr_element.text.strip())
+
+    return tdwtext_text.strip(), abbr_classes
 
 # Funkcja przekształcająca nazwę księgi na numer
 def book_name_to_number(name):
@@ -98,5 +120,12 @@ if __name__ == "__main__":
     parser.add_argument('language', help='Język tekstu ("greek", "hebrew" lub "pl")')
     args = parser.parse_args()
 
-    text = retrieve_text(args.book, args.chapter_verse, args.language)
-    print(text)
+    text, abbr_classes = retrieve_text(args.book, args.chapter_verse, args.language)
+
+    if abbr_classes:
+        print("\nKlasy abbr:")
+        # Tworzenie pary (skrócona forma, fragment tekstu) i drukowanie
+        for abbr, fragment in zip(abbr_classes, text.split('\n')):
+            print(f"{abbr} : {fragment}")
+    else:
+        print(text)
