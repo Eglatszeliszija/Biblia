@@ -17,7 +17,6 @@ def retrieve_text(book, chapter_verse, language):
             else:
                 text = file_content
                 abbr_classes = None
-            return text, abbr_classes
     else:
         if language == 'pl':
             url = f'http://bibliepolskie.pl/zzteksty_wer.php?book={book_name_to_number(book)}&chapter={chapter_verse.split("-")[0]}&verse={chapter_verse.split("-")[1]}'
@@ -25,9 +24,9 @@ def retrieve_text(book, chapter_verse, language):
             url = f'https://biblehub.com/texts/{book}/{chapter_verse}.htm'
 
         response = requests.get(url)
-
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, 'html.parser')
+
             if language == 'pl':
                 text, abbr_classes = retrieve_pl_text(soup)
             else:
@@ -46,15 +45,15 @@ def retrieve_text(book, chapter_verse, language):
                     abbr_classes = []
 
             with open(filename, 'w', encoding='utf-8') as file:
+                file.write(text)
                 if abbr_classes:
-                    for abbr, fragment in zip(abbr_classes, text.split('\n')):
-                        file.write(f"{abbr} : {fragment}\n")
-                else:
-                    file.write(text)
-
-            return text, abbr_classes
+                    file.write("\n\nKlasy abbr:\n")
+                    file.write("\n".join(abbr_classes))
         else:
-            return f"Nie udało się pobrać zawartości strony: {url}", []
+            text = f"Nie udało się pobrać zawartości strony: {url}"
+            abbr_classes = []
+
+    return text, abbr_classes
 
 # Funkcja do parsowania tekstu w języku polskim
 def retrieve_pl_text(soup):
@@ -90,23 +89,29 @@ def book_name_to_number(name):
     }
     return bible_books.get(name, "Nie znaleziono księgi w biblii.")
 
-# Inicjalizacja bota
 intents = discord.Intents.default()
 intents.message_content = True
+
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# Komenda bota
-@bot.command()
+@bot.event
+async def on_ready():
+    print(f'Bot {bot.user.name} has connected to Discord!')
+
+@bot.command(name='biblia')
 async def biblia(ctx, book: str, chapter_verse: str, language: str):
     text, abbr_classes = retrieve_text(book, chapter_verse, language)
 
     if abbr_classes:
-        result = "\n:\n"
+        result = ""
         for abbr, fragment in zip(abbr_classes, text.split('\n')):
             result += f"{abbr} : {fragment}\n"
-        await ctx.send(result)
     else:
-        await ctx.send(text)
+        result = text
 
-# Uruchomienie bota
-bot.run('Token')
+    # Podziel tekst na fragmenty po maksymalnie 2000 znaków i wyślij je osobno
+    for i in range(0, len(result), 2000):
+        await ctx.send(result[i:i+2000])
+
+
+bot.run('token')
