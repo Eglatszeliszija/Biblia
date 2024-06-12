@@ -115,9 +115,7 @@ def book_name_to_number(name):
 if __name__ == "__main__":
     # Parser argumentów z linii poleceń
     parser = argparse.ArgumentParser(description='Retrieve text from Bible Hub.')
-    parser.add_argument('book', help='Nazwa księgi (np. "Rdz") - skróty: Rdz, Wj, Kpł, Lb, Pwt, Joz, Sędz, Rut, 1Sm, 
-    2Sm, 1Krl, 2Krl, 1Krn, 2Krn, Ezd, Neh, Est, Job, Ps, Prz, Koh, Pnp, Iz, Jer, Lm, Ez, Dn, Hos, Jl, Am, Abd, Jon, Mi, Na, Ha, So, 
-    Ag, Za, Ml, Mt, Mk, Łk, J, Dz, Rz, 1Kor, 2Kor, Ga, Ef, Flp, Kol, 1Tes, 2Tes, 1Tm, 2Tm, Tt, Flm, Hbr, Jk, 1P, 2P, 1J, 2J, 3J, Jd, Obj')
+    parser.add_argument('book', help='Nazwa księgi (np. "Rdz") - skróty: Rdz, Wj, Kpł, Lb, Pwt, Joz, Sędz, Rut, 1Sm,2Sm, 1Krl, 2Krl, 1Krn, 2Krn, Ezd, Neh, Est, Job, Ps, Prz, Koh, Pnp, Iz, Jer, Lm, Ez, Dn, Hos, Jl, Am, Abd, Jon, Mi, Na, Ha, So,Ag, Za, Ml, Mt, Mk, Łk, J, Dz, Rz, 1Kor, 2Kor, Ga, Ef, Flp, Kol, 1Tes, 2Tes, 1Tm, 2Tm, Tt, Flm, Hbr, Jk, 1P, 2P, 1J, 2J, 3J, Jd, Obj')
     parser.add_argument('chapter_verse', help='Numer rozdziału i wersetu (np. "1-1")')
     parser.add_argument('language', help='Język tekstu ("greek", "hebrew" lub "pl")')
     args = parser.parse_args()
@@ -131,4 +129,3 @@ if __name__ == "__main__":
             print(f"{abbr} : {fragment}")
     else:
         print(text)
-                       
