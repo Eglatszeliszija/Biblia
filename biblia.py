@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup
 
 # Funkcja do pobierania tekstu z internetu lub z pliku
 def retrieve_text(book, chapter_verse, language):
-    # Tworzymy nazwę pliku na podstawie danych wejściowych
     filename = f"{book}_{chapter_verse}_{language}.txt"
 
     # Sprawdzamy, czy plik już istnieje
@@ -21,23 +20,28 @@ def retrieve_text(book, chapter_verse, language):
                 abbr_classes = None
             return text, abbr_classes
     else:
-        # Tworzymy adres URL strony na podstawie podanych danych
         if language == 'pl':
-            url = f'http://bibliepolskie.pl/zzteksty_wer.php?book={book_name_to_number(book)}&chapter={chapter_verse.split("-")[0]}&verse={chapter_verse.split("-")[1]}'
+            book_number = book_name_to_number(book)
+            print(f"Book number for {book}: {book_number}")  # Diagnostyka
+            if isinstance(book_number, int):
+                url = f'http://bibliepolskie.pl/zzteksty_wer.php?book={book_number}&chapter={chapter_verse.split("-")[0]}&verse={chapter_verse.split("-")[1]}'
+                print(f"Generated URL: {url}")
+            else:
+                return f"Błąd: {book_number}", []
         else:
             url = f'https://biblehub.com/texts/{book}/{chapter_verse}.htm'
 
         # Pobieramy zawartość strony internetowej
         response = requests.get(url)
+        print(f"Response status code: {response.status_code}")
 
-        # Sprawdzamy, czy pobranie było udane
         if response.status_code == 200:
-            # Parsujemy zawartość strony przy użyciu Beautiful Soup
             soup = BeautifulSoup(response.content, 'html.parser')
-
-            # Jeśli użytkownik wybrał język "pl", użyj funkcji retrieve_pl_text
+            
             if language == 'pl':
                 text, abbr_classes = retrieve_pl_text(soup)
+                if not text.strip():  # Sprawdź, czy tekst nie jest pusty
+                    print("Ostrzeżenie: Pobrany tekst jest pusty.")
             else:
                 if language == 'greek':
                     first_element = soup.find(class_='greek')
@@ -64,7 +68,8 @@ def retrieve_text(book, chapter_verse, language):
 
             return text, abbr_classes
         else:
-            return f"Nie udało się pobrać zawartości strony: {url}", []
+            return f"Nie udało się pobrać zawartości strony: {url}\nStatus code: {response.status_code}", []
+
 
 # Funkcja do parsowania tekstu w języku polskim
 def retrieve_pl_text(soup):
@@ -120,11 +125,14 @@ if __name__ == "__main__":
     parser.add_argument('language', help='Język tekstu ("greek", "hebrew" lub "pl")')
     args = parser.parse_args()
 
+    print(f"Book: {args.book}, Chapter and Verse: {args.chapter_verse}, Language: {args.language}")
+    
     text, abbr_classes = retrieve_text(args.book, args.chapter_verse, args.language)
 
-    if abbr_classes:
+    if not text:
+        print("Błąd: Nie udało się pobrać tekstu.")
+    elif abbr_classes:
         print("\nKlasy abbr:")
-        # Tworzenie pary (skrócona forma, fragment tekstu) i drukowanie
         for abbr, fragment in zip(abbr_classes, text.split('\n')):
             print(f"{abbr} : {fragment}")
     else:
